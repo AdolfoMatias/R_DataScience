@@ -1,0 +1,100 @@
+---
+title: "Dataset Diabetes - Arvores de Decisão Classificação"
+output: html_notebook
+---
+
+CARREGANDO BIBLIOTECAS
+
+```{r}
+#install.packages('MLmetrics')
+library(rpart.plot)
+library(rpart)
+```
+
+CARREGANDO BASE DE DIABETICOS
+
+```{r}
+diabetes  <-  read.csv("diabetes.csv", sep=",", header= T, na.strings="", stringsAsFactors = T)
+head(diabetes)
+dim(diabetes)
+```
+GERANDO SUMÁRIO
+```{r}
+summary(diabetes)
+```
+
+GERANDO DUMMIES PARA FAZER CLASSIFICAÇÃO 
+```{r}
+diabetes["classe"] = ifelse(diabetes$Outcome == 0, "no", "yes")
+head(diabetes)
+```
+GERANDO AMOSTRAS
+```{r}
+amostras  = sample(c(0,1), 768, replace=T, prob=c(0.7,0.3))
+arvotreino = diabetes[amostras ==0, -c(9)]
+dataprev <- arvotreino[,-c(9)]
+arvoteste = diabetes[amostras ==1, -c(9)]
+dataprev
+```
+CRIANDO MODELO E PLOTANDO GRÁFICO
+```{r}
+arvorec = rpart(arvotreino$classe ~ ., dataprev, method="class")
+rpart.plot(arvorec, cex =.6)
+```
+PREVENDO COM O MODELO
+```{r}
+
+previsaoarvo = predict(arvorec, arvoteste)
+head(previsaoarvo)
+```
+COMPARANDO O MODELO
+```{r}
+compara = cbind(arvoteste, previsaoarvo)
+compara
+```
+CRIANDO COLUNA PARA COMPARAR
+```{r}
+compara["resultado"]= ifelse(compara$yes >= 0.5, "yes", "no")
+head(compara)
+```
+GERANDO MATRIZ DE CONFUSÃO
+```{r}
+matrizconf = table(compara$classe,compara$resultado)
+matrizconf
+```
+
+GERANDO METRICAS
+```{r}
+acura = ((matrizconf[1]+matrizconf[4])/sum(matrizconf))
+acura
+precio = (matrizconf[1]/(matrizconf[1]+matrizconf[2]))
+precio
+reca =  (matrizconf[1]/(matrizconf[1]+matrizconf[3]))
+reca
+f1scor = ((2*(precio*reca))/(precio+reca))
+f1scor
+```
+
+
+GERANDO MÉTRICAS COM MLmetrics
+```{r}
+library(MLmetrics)
+ConfusionMatrix(compara$resultado, compara$classe)
+Accuracy(compara$resultado, compara$classe)
+Precision(compara$classe, compara$resultado)
+Recall(compara$classe, compara$resultado)
+F1_Score(compara$classe, compara$resultado)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+

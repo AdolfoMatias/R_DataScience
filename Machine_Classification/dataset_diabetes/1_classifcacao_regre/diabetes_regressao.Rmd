@@ -1,0 +1,170 @@
+---
+title: "Dataset Diabetes - Arvores de Decisão Regressão"
+output: html_notebook
+---
+```{r}
+#install.packges("rpart.plot")
+#install.packages("rpart.plot")
+library(rpart)
+library(forecast)
+library(rpart.plot)
+```
+CARREGANDO BASE DE DADOS
+```{r}
+diabetes <- read.csv("diabetes.csv", sep=",", header=TRUE)
+head(diabetes)
+dim(diabetes)
+```
+DICIONÁRIO:
+ - Pregnancies: information about the number of pregnancy female had till date;
+ - Glucose: glucose level of patient generally higher glucose level shoes the chances of sugar;
+ - BloodPressure: Blood pressure data of the patient;
+ - Skin Thickness: Skin thickness of patient;
+ - Insulin: Insulin level of patient;
+ - BMI: The full form of BMI is Body Mass Index. It is a method of measuring through which individuals are classified into the;
+ - DiabetesPedigree: Diabetes pedigree function ( DiabetesPedigreeFunction) The Diabetes Pedigree Function, pedi, provides;
+ - Age: Age of patient;
+ - Outcome: 0 shows that patient doesn't have diabetes 1 shows patient have diabetes;
+ 
+ - Gestações: 
+  - Glicose: nível de glicose do paciente geralmente sapatos de nível de glicose mais elevados as chances de açúcar;
+  - Pressão Arterial: Dados de pressão arterial do paciente;
+  - Espessura da Pele: Espessura da pele do paciente;
+  - Insulina: nível de insulina do paciente;
+  - IMC: A forma completa do IMC é o Índice de Massa Corporal. É um método de medição através do qual os indivíduos são classificados em;
+  - DiabetesPedigree: Função de pedigree de Diabetes (Função DiabetesPedigree) A Função de Pedigree de Diabetes, pedi, fornece;
+  - Idade: Idade do paciente;
+  - Resultado: 0 mostra que o paciente não tem diabetes 1 mostra que o paciente tem diabetes;
+ 
+
+VERIFICANDO DADOS NULOS
+```{r}
+#não apresenta dados nulos
+diabetes[!complete.cases(diabetes),]
+```
+VERIFICANDO O NÍVEL DE DISTRIBUIÇÃO DOS ATRIBUTOS
+```{r}
+split.screen(figs=c(2,2))
+screen(1)
+hist(diabetes$Pregnancies , breaks=7, main=colnames(diabetes[1]))
+screen(2)
+hist(diabetes$Glucose, breaks=7, main=colnames(diabetes[2]))
+screen(3)
+hist(diabetes$BloodPressure, breaks=7, main=colnames(diabetes[3]))
+screen(4)
+hist(diabetes$SkinThickness, breaks=7, main=colnames(diabetes[4]))
+
+```
+```{r}
+split.screen(figs=c(2,2))
+screen(1)
+hist(diabetes$Insulin , breaks=7, main=colnames(diabetes[5]))
+screen(2)
+hist(diabetes$BMI, breaks=7, main=colnames(diabetes[6]))
+screen(3)
+hist(diabetes$DiabetesPedigreeFunction, breaks=7, main=colnames(diabetes[7]))
+screen(4)
+hist(diabetes$Age, breaks=7, main=colnames(diabetes[8]))
+```
+CONHECENDO O SUMÁRIO DOS DADOS
+
+```{r}
+summary(diabetes)
+```
+CRIANDO AMOSTRA DO MODELO PARA CLASSIFICAR POR REGRESSÃO
+```{r}
+#perimeiro veirifacamos a dimensão
+dim(diabetes)
+```
+```{r}
+amostra = sample(c(0,1), 768, replace=T, prob=c(0.7,0.3) )
+datatreino = diabetes[amostra==0, ]
+datateste = diabetes[amostra==1,]
+datatreino
+
+```
+CRIANDO O MODELO
+```{r}
+dataTr <- datatreino[,-c(9)]
+dataTe <- datateste[, -c(9)]
+arvoreg = rpart(datatreino$Outcome ~ . , data=dataTr, method="class")
+arvoreg
+
+```
+VISUALIZANDO ARVORE EM UM DENDOGRAMA
+```{r}
+rpart.plot(arvoreg, cex=.6)
+```
+CRIANDO PREDITOR DO MODELO
+```{r}
+teste = predict(arvoreg, datateste)
+head(teste)
+```
+COMPARANDO MODELO
+```{r}
+comp = cbind(datateste, teste)
+comp
+```
+CRINAOD DUMMY PARA RESULTADO
+```{r}
+comp["Resultado"] = ifelse(comp$`0` > 0.5, 0, 1)
+comp
+dim(comp)
+
+```
+MATRIZ DE CONFUSÃO
+```{r}
+
+tabela = table(comp$Resultado, comp$Outcome)
+tabela
+```
+ACURÁCIA POR MATRIZ DE CONFUSÃO
+```{r}
+acuracia = ((tabela[1] +tabela[4] )/sum(tabela))
+acuracia
+
+
+precisao = (tabela[1]/(tabela[1]+tabela[2]))
+precisao
+
+recall = (tabela[1]/(tabela[1]+tabela[3]))
+recall
+
+f1score = ((2*(precisao*recall))/ (precisao+recall))
+f1score
+```
+ACURÁCIA POR ERROS COM FORECAST
+```{r}
+acuracia2 = accuracy(comp$Resultado, datateste$Outcome) 
+
+acuracia2
+```
+
+ISSO AQUI É MARAVILHOSO
+
+
+```{r}
+#verificando biblioteca Mlmetrics
+library(MLmetrics)
+#https://www.rdocumentation.org/packages/MLmetrics/versions/1.1.1
+Accuracy(comp$Resultado, comp$Outcome)
+F1_Score(comp$Outcome , comp$Resultado, positive = NULL)
+```
+```{r}
+#Matriz de Confusão com o Mlmetrics
+ConfusionMatrix(comp$Resultado, comp$Outcome)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,78 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+CARREGANDO BIBLIOTECAS
+```{r}
+library(rpart)
+
+```
+CARREGANDO BASE
+```{r}
+vinhedo <- read.csv("WineQT.csv", sep=",", header=TRUE)
+head(vinhedo)
+```
+RETIRANDO ID DA COLUNA
+```{r}
+vinhedo <- vinhedo[,-c(13)]
+dim(vinhedo)
+```
+CRIANDO COLUNA QUALIDADE
+```{r}
+vinhedo["qualidade"] <- ifelse(vinhedo$quality <7,"ruim","bom")
+#aqui fazemos uma especie de OneHot Encoding se for ruim recebe 0 caso contrário recebe 1
+#vinhedo["class"]<- ifelse(vinhedo$qualidade=="ruim", 0, 1)
+head(vinhedo)
+```
+REMOVENDO COLUNA DE QUALIDADE PARA FAZER CLASSIFICAÇÃO LIMPA
+```{r}
+#vinhedo <- vinhedo[, -c(12)]
+#colnames(vinhedo)
+```
+SEPARANDO AMOSTRA e treino e teste
+```{r}
+amostra = sample(2, 1143, replace=TRUE, prob=c(0.7, 0.3))
+dadostreino = vinhedo[amostra==1,]
+dadostreino <- vinhedo[, -c(12)] #removi coluna quality pois superajustava o modelo
+dadosteste = vinhedo[amostra==2,]
+dadosteste<- vinhedo[,-c(12)]#removi coluna quality pois superajustava o modelo
+dadostreino
+```
+CRIANDO MODELO
+```{r}
+dadoprev <- dadostreino[, -c(13)] #removi a coluna qualidade pra usar como dataframe de atributos previsores
+arvore = rpart( dadostreino$qualidade ~ . , data = dadoprev, method="class") #aqui determino a classe que quero atingir
+plot(arvore)
+text(arvore, use.n = TRUE, cex=.8, all = TRUE)
+```
+PREVENDO MODELO
+```{r}
+previsao = predict(arvore, dadosteste) #pego o modelo criado e aplico no teste para ver o percentual
+head(previsao)
+```
+```{r}
+cred = cbind(dadosteste, previsao) #faço a comparação dos dados
+cred
+```
+
+```{r}
+cred["resultado"] <- ifelse(cred$ruim> 0.5 ,"ruim", "bom")
+cred
+```
+```{r}
+confusao = table(cred$qualidade, cred$resultado)
+confusao
+
+```
+
+```
+
+
+
+
+
+
+
+
+
+

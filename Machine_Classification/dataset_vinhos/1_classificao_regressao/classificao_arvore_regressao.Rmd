@@ -1,0 +1,96 @@
+---
+title: "Exercicio 1 - Desafio Kaggle Classificão com Regressao - Avores de Decisao"
+output: html_notebook
+---
+CARREGANDO AS BIBLIOTECAS
+```{r}
+library("rpart") #cria o modelo
+library("corrgram") #verifica correlacao
+library("forecast") #avalia o modelo
+```
+CARREGANDO A BASE DE DADOS DE VINHOS
+```{r}
+base = read.csv(file.choose(), sep=",", header=T, na.strings = "", stringsAsFactors = T)
+head(base)
+```
+VERIFICANDO TAMANHO DA BASE
+```{r}
+#1143 linhas por 13 colunas
+dim(base)
+```
+EXPLORANDO O CONJUNTO DE DADOS
+```{r}
+summary(base)
+```
+BOXPLOT DO CONJUNTO DE DADOS
+```{r}
+boxplot(base)
+#removendo ID para melhorar o modelo
+base = base[,-c(13)]
+dim(base)
+split.screen(figs=c(2,2))
+screen(1)
+boxplot(base$fixed.acidity, main="Boxplot: Acidez Fixa")
+screen(2)
+boxplot(base$volatile.acidity, main="Boxplot: Acidez Volátil")
+screen(3)
+boxplot(base$citric.acid, main="Boxplot: Ácido Citrico")
+screen(4)
+boxplot(base$residual.sugar, main="Boxplot:Açucar Residual")
+```
+```{r}
+
+boxplot(base)
+split.screen(figs=c(2,2))
+screen(1)
+boxplot(base$chlorides, main=  "Boxplot: Cloretos")
+screen(2)
+boxplot(base$free.sulfur.dioxide, main="Boxplot: Dióxido de Enxovre Livre")
+screen(3)
+boxplot(base$total.sulfur.dioxide, main= "Boxplot: Dóxido de Enxofre total")
+screen(4)
+boxplot(base$density, main="Boxplot: Densidade")
+```
+```{r}
+
+split.screen(figs=c(2,2))
+screen(1)
+boxplot(base$pH, main="Boxplot: pH")
+screen(2)
+boxplot(base$sulphates, main="Boxplot: Sulfatos")
+screen(3)
+boxplot(base$alcohol, main ="Boxplot: Álcool")
+``` 
+COMO IREI UTILIZAR ARVORE DE DECISÃO ENTÃO PRECISAREMOS REALIZAR UMA CAÇA A OUTLIERS NEM MISSING VALUES
+VOU APENAS LEVANTAR UM GRÁFICO DE CORRELAÇÕES COM A BIBLIOTECA CORRPLOT
+
+```{r}
+#install.packages("corrplot")
+library(corrplot)
+basecor= cor(base[c(1:11)], use="na.or.complete") #use ignora os valores NA, pois antes precisamos passar a correlação para depois plotar
+corrplot(basecor, method="color", order="alphabet") #O metodo color preenche com cores ao inves de number"
+```
+```{r}
+modelo = rpart(base$quality ~ base$fixed.acidity + base$volatile.acidity 
+               + base$chlorides + base$total.sulfur.dioxide+
+                 base$density + base$pH  + base$alcohol, data=base)
+
+```
+```{r}
+
+plot(modelo)
+text(modelo)
+```
+```{r}
+previsao = predict(modelo, base)
+comparacao = cbind(previsao, base$quality, previsao - base$quality)
+head(comparacao)
+```
+```{r}
+#Removendo as colunas para ajustar o modelo conseguui diminior os valores nomais e perceuntais do erro:
+accuracy(previsao, base$quality)
+```
+
+
+
+
